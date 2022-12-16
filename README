@@ -1,0 +1,22 @@
+# Check for file input (just use the host system for this
+./check_file_input.sh coretuil.target /fuzz_data/make_check/processed
+
+# build the docker container
+sudo docker build . -t coreutils_argenv_fuzz
+
+# Use coreutils testsuite to generate initial input corpus
+sudo docker run --rm --user user -e FUZZ_OUTPUT_BASE=/fuzz_data/make_check/raw -v $PWD/make_check/raw:/fuzz_data/make_check/raw -it coreutils_argenv_fuzz:latest /bin/bash -c "cd /coreutils_src/obj-vanilla && make check"
+
+# Parse dumped data
+python3 prep_env.py
+
+# Initialize Fuzzing corpus
+ls make_check/raw | awk -F_ '{print $2}' | sort | uniq > coreutil.targets
+# Recommended: remove ls (will produce a lot of output)
+while read i; do echo $i; mkdir make_check/processed/$i;  python3 prep_env.py -i $(find make_check/raw -type f -name "fuzzi_$i*\.arg" | xargs) -e $(find make_check/raw -type f -name "fuzzi_$i*\.env" | xargs) -o make_check/processed/$i > make_check/processed/$i.envmeta; done < coreutil.targets
+
+# Minimize Fuzzing corpus
+sudo docker run --rm  -v $PWD:/xxx -it coreutils_argenv_fuzz:latest /bin/bash -c "python3 /xxx/run_cmin.py -t /xxx/xx.targ -i /xxx/fuzz_data/make_check/processed -e /xxx/fuzz_data/make_check/processed -f /xxx/fuzzings -nt 1 --tdir /coreutils_afpp/bin/"
+
+# Start the fuzzer
+sudo docker run --rm  -v $PWD:/xxx -it coreutils_argenv_fuzz:latest /bin/bash -c "python3 /xxx/run_fuzzer.py -t date -e /xxx/fuzz_data/make_check/processed -f /xxx/fuzzings -nt 4 --tdir /coreutils_afpp/bin/ --lafdir /coreutils_aflpp_laf/bin -x 60"
