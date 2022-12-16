@@ -2,6 +2,7 @@
 mkdir -p fuzz_data/make_check/processed
 mkdir -p fuzz_data/make_check/raw
 mkdir fuzzings
+mkdir fuzz_data_tmp
 
 # Check for file input (just use the host system for this
 ./check_file_input.sh coreutil.targets ./fuzz_data/make_check/processed
@@ -21,6 +22,6 @@ sudo docker run --rm  -v $PWD:/xxx -t coreutils_argenv_fuzz:latest /bin/bash -c 
 
 # Start the fuzzer
 # Note: better to start each target in a separate container because this will break stuff
-sudo docker run --rm  -v $PWD:/xxx -t coreutils_argenv_fuzz:latest /bin/bash -c "python3 /xxx/run_fuzzer.py -t date -e /xxx/fuzz_data/make_check/processed -f /xxx/fuzzings -nt 4 --tdir /coreutils_afpp/bin/ --lafdir /coreutils_afpp_laf/bin --rqdir /coreutils_afpp_rq/bin -x 60"
-while read i; do echo $i; docker run --rm -e FUZZ_TARGET=$i -v $PWD:/xxx -t coreutils_argenv_fuzz:latest /bin/bash -c 'python3 /xxx/run_fuzzer.py -t "$FUZZ_TARGET" -e /xxx/fuzz_data/make_check/processed -f /xxx/fuzzings -nt 16 --tdir /coreutils_afpp/bin/ --lafdir /coreutils_afpp_laf/bin --rqdir /coreutils_afpp_rq/bin -x 2700'; done < coreutil.targets
+#sudo docker run --rm  -v $PWD:/xxx -t coreutils_argenv_fuzz:latest /bin/bash -c "python3 /xxx/run_fuzzer.py -t date -e /xxx/fuzz_data/make_check/processed -f /xxx/fuzzings -nt 4 --tdir /coreutils_afpp/bin/ --lafdir /coreutils_afpp_laf/bin --rqdir /coreutils_afpp_rq/bin -x 60"
+while read i; do echo $i; cp ./fuzz_data/make_check/processed/"$i".fileinput fuzz_data_tmp; cp fuzz_data/make_check/processed/"$i".envmeta fuzz_data_tmp; cp run_fuzzer.py scripts/; docker run --rm -e FUZZ_TARGET=$i -v $PWD/fuzz_data_tmp:/fuzz_data -v $PWD/scripts:/scripts -v $PWD/fuzzings/$i:/fuzzings/$i -t coreutils_argenv_fuzz:latest /bin/bash -c 'python3 /scripts/run_fuzzer.py -t "$FUZZ_TARGET" -e /fuzz_data -f /fuzzings -nt 16 --tdir /coreutils_afpp/bin/ --lafdir /coreutils_afpp_laf/bin --rqdir /coreutils_afpp_rq/bin -x 2700'; done < coreutil.targets
 
