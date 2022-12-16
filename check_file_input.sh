@@ -1,3 +1,4 @@
+#!/bin/bash
 TARGET_FN=$1
 if [[ -f "$FILE" ]]; then
 	echo "$TARGET_FN does not exist"

@@ -114,6 +114,7 @@ for target in open(args.targets).readlines():
 
     cmd_cmin = [
             '/usr/local/bin/afl-cmin',
+            '-t', '1000',
             '-i', input_dir_path,
             '-o', input_corpus_path,
             '--',

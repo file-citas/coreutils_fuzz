@@ -19,6 +19,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--target', required=True, help="The coreutils target")
 parser.add_argument('-td', '--tdir', default='/coreutils_aflpp/bin', help="Directory containing coreutils targets compiled with afl")
 parser.add_argument('--lafdir', default='/coreutils_aflpp_laf/bin', help="Directory containing coreutils targets compiled with afl and compcov")
+parser.add_argument('--rqdir', default='/coreutils_aflpp_rq/bin', help="Directory containing coreutils targets compiled with afl and redqueen")
 parser.add_argument('-e', '--env', default='/fuzz_data/make_check/processed', help="Directory holding the target.envmeta and target.hasfileinput files generated with prep_env.py and check_file_input.sh")
 parser.add_argument('-f', '--fuzz', default='/fuzz_data/fuzzings/', help="Fuzzing output directory")
 parser.add_argument('-x', '--xxx', default=3600, help="Stop after x seconds", type=int)
@@ -46,13 +47,22 @@ if not os.path.isdir(fuzz_dir):
     print("No exist %s" % fuzz_dir)
     exit(1)
 
-target_nocompcov_dir = args.lafdir
-if not os.path.isdir(target_nocompcov_dir):
-    print("No exist %s" % target_nocompcov_dir)
-    target_nocompcov_dir = target_dir
-target_nocompcov_path = os.path.join(target_nocompcov_dir, target)
-if not os.path.isfile(target_nocompcov_path):
-    print("No exist %s" % target_nocompcov_path)
+target_compcov_dir = args.lafdir
+if not os.path.isdir(target_compcov_dir):
+    print("No exist %s" % target_compcov_dir)
+    target_compcov_dir = target_dir
+target_compcov_path = os.path.join(target_compcov_dir, target)
+if not os.path.isfile(target_compcov_path):
+    print("No exist %s" % target_compcov_path)
+    exit(1)
+
+target_complog_dir = args.rqdir
+if not os.path.isdir(target_complog_dir):
+    print("No exist %s" % target_complog_dir)
+    target_complog_dir = target_dir
+target_complog_path = os.path.join(target_complog_dir, target)
+if not os.path.isfile(target_complog_path):
+    print("No exist %s" % target_complog_path)
     exit(1)
 
 target_path = os.path.join(target_dir, target)
@@ -124,7 +134,7 @@ cmd_fuzz_main = [
         '-V', "%d" % (args.xxx+30),
         '-i', input_corpus_path,
         '-o', output_corpus_path,
-        '--', target_nocompcov_path,
+        '--', target_path,
         ]
 cmd_afl.append(cmd_fuzz_main)
 
@@ -136,7 +146,7 @@ cmd_fuzz_det = [
         '-V', "%d" % args.xxx,
         '-i', input_corpus_path,
         '-o', output_corpus_path,
-        '--', target_nocompcov_path,
+        '--', target_compcov_path,
         ]
 cmd_afl.append(cmd_fuzz_det)
 
@@ -148,7 +158,7 @@ cmd_fuzz_z = [
         '-V', "%d" % args.xxx,
         '-i', input_corpus_path,
         '-o', output_corpus_path,
-        '--', target_path,
+        '--', target_complog_path,
         ]
 cmd_afl.append(cmd_fuzz_z)
 
@@ -160,7 +170,7 @@ cmd_fuzz_mopt0 = [
         '-V', "%d" % args.xxx,
         '-i', input_corpus_path,
         '-o', output_corpus_path,
-        '--', target_nocompcov_path,
+        '--', target_path,
         ]
 cmd_afl.append(cmd_fuzz_mopt0)
 
@@ -172,7 +182,7 @@ cmd_fuzz_mopt1 = [
         '-V', "%d" % args.xxx,
         '-i', input_corpus_path,
         '-o', output_corpus_path,
-        '--', target_path,
+        '--', target_complog_path,
         ]
 cmd_afl.append(cmd_fuzz_mopt1)
 
@@ -184,7 +194,7 @@ cmd_fuzz_mopt2 = [
         '-V', "%d" % args.xxx,
         '-i', input_corpus_path,
         '-o', output_corpus_path,
-        '--', target_nocompcov_path,
+        '--', target_compcov_path,
         ]
 cmd_afl.append(cmd_fuzz_mopt2)
 
@@ -196,7 +206,7 @@ cmd_fuzz_pexplore = [
         '-V', "%d" % args.xxx,
         '-i', input_corpus_path,
         '-o', output_corpus_path,
-        '--', target_nocompcov_path,
+        '--', target_path,
         ]
 cmd_afl.append(cmd_fuzz_pexplore)
 
@@ -220,7 +230,7 @@ cmd_fuzz_plin = [
         '-V', "%d" % args.xxx,
         '-i', input_corpus_path,
         '-o', output_corpus_path,
-        '--', target_nocompcov_path,
+        '--', target_complog_path,
         ]
 cmd_afl.append(cmd_fuzz_plin)
 
@@ -232,7 +242,7 @@ cmd_fuzz_pquad = [
         '-V', "%d" % args.xxx,
         '-i', input_corpus_path,
         '-o', output_corpus_path,
-        '--', target_nocompcov_path,
+        '--', target_compcov_path,
         ]
 cmd_afl.append(cmd_fuzz_pquad)
 
@@ -244,7 +254,7 @@ cmd_fuzz_pexploit = [
         '-V', "%d" % args.xxx,
         '-i', input_corpus_path,
         '-o', output_corpus_path,
-        '--', target_nocompcov_path,
+        '--', target_path,
         ]
 cmd_afl.append(cmd_fuzz_pexploit)
 
@@ -256,9 +266,31 @@ cmd_fuzz_prare = [
         '-V', "%d" % args.xxx,
         '-i', input_corpus_path,
         '-o', output_corpus_path,
-        '--', target_nocompcov_path,
+        '--', target_path,
         ]
 cmd_afl.append(cmd_fuzz_prare)
+
+cmd_fuzz_x0 = [
+        '/usr/local/bin/afl-fuzz',
+        '-S', target+'-x0',
+        '-t', '5000',
+        '-V', "%d" % args.xxx,
+        '-i', input_corpus_path,
+        '-o', output_corpus_path,
+        '--', target_compcov_path,
+        ]
+cmd_afl.append(cmd_fuzz_x0)
+
+cmd_fuzz_x1 = [
+        '/usr/local/bin/afl-fuzz',
+        '-S', target+'-x1',
+        '-t', '5000',
+        '-V', "%d" % args.xxx,
+        '-i', input_corpus_path,
+        '-o', output_corpus_path,
+        '--', target_complog_path,
+        ]
+cmd_afl.append(cmd_fuzz_x1)
 
 for i, cmd in enumerate(cmd_afl):
     p_afl.append(pool.apply_async(call_proc, (" ".join(cmd), envs_dict)))
