@@ -103,12 +103,6 @@ for env in envs.split(" "):
         envs_dict[env_name] = env_val
     except:
         pass
-if "ENV_FUZZ_COUNT" not in envs_dict.keys():
-    print("Warning env might be broken")
-    envs_dict["ENV_FUZZ_COUNT"] = '0'
-if "HAS_FILE_INPUT" not in envs_dict.keys():
-    print("Warning env might be broken")
-    envs_dict["HAS_FILE_INPUT"] = '0'
 fileinp = open(fileinp_path, "r").read()
 fileinp = fileinp.rstrip()
 for env in fileinp.split(" "):
@@ -118,6 +112,14 @@ for env in fileinp.split(" "):
         envs_dict[env_name] = env_val
     except:
         pass
+
+if "ENV_FUZZ_COUNT" not in envs_dict.keys():
+    print("Warning env might be broken (no fuzz count)")
+    envs_dict["ENV_FUZZ_COUNT"] = '0'
+if "HAS_FILE_INPUT" not in envs_dict.keys():
+    print("Warning env might be broken (no file input)")
+    envs_dict["HAS_FILE_INPUT"] = '0'
+
 envs_dict["AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES"] = '1'
 envs_dict["AFL_AUTORESUME"] = '1'
 #envs_dict["AFL_FORCE_UI"] = '1'
